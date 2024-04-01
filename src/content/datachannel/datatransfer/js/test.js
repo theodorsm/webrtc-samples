@@ -14,6 +14,7 @@ const seleniumHelpers = require('../../../../../test/webdriver');
 let driver;
 const path = '/src/content/datachannel/datatransfer/index.html';
 const url = `${process.env.BASEURL ? process.env.BASEURL : ('file://' + process.cwd())}${path}`;
+console.log(url);
 
 describe('datachannel datatransfer', () => {
   beforeAll(() => {

@@ -1,7 +1,8 @@
-on:
-  schedule:
-    - cron: "30 5 * * *"
-
+on: [pull_request]
+# on:
+#   schedule:
+#     - cron: "30 5 * * *"
+# 
 jobs:
   interop:
     runs-on: ubuntu-latest
@@ -9,15 +10,40 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        browserA: [chrome, firefox]
-        browserB: [firefox, chrome]
+        browser: [chrome, firefox]
         bver: ['unstable']
     steps:
     - uses: actions/checkout@v3
+    - name: Install tshark
+      run: sudo apt install -y tshark
     - uses: actions/setup-node@v3
     - run: npm install
-    - run: BROWSER=${{matrix.browserA}} BVER=${{matrix.bver}} ./node_modules/travis-multirunner/setup.sh
-    - run: BROWSER=${{matrix.browserB}} BVER=${{matrix.bver}} ./node_modules/travis-multirunner/setup.sh
+    - run: BROWSER=${{matrix.browser}} BVER=${{matrix.bver}} ./node_modules/travis-multirunner/setup.sh
     - run: sudo rm /usr/bin/chromedriver /usr/bin/geckodriver # remove preinstalled github chromedriver/geckodriver from $PATH
     - run: Xvfb :99 &
-    - run: BROWSER_A=${{matrix.browserA}} BROWSER_B=${{matrix.browserB}} BVER=${{matrix.bver}} DISPLAY=:99.0 node_modules/.bin/jest --retries=3 test/interop/
+    - name: Get browser version
+      id: "browser"
+      run: | 
+        if [ ${{matrix.browser}} == 'chrome' ]; then 
+          echo "version=$(chromium --version | sed 's/ /_/g')" >> $GITHUB_OUTPUT
+        else
+          echo "version=$(${{matrix.browser}} --version | sed 's/ /_/g')" >> $GITHUB_OUTPUT
+        fi
+    - run: |
+        mkdir ./captures/
+        touch ./captures/full-capture-${{matrix.browser}}-${{steps.browser.outputs.version}}.pcap
+        sudo chown -R root:root ./captures
+        ls -lga ./captures
+    - name: Start tshark capture
+      run: sudo tshark -i any -w ./captures/full-capture-${{matrix.browser}}-${{steps.browser.outputs.version}}.pcap -f "udp" &
+    - run: BROWSER_A=${{matrix.browser}} BROWSER_B=${{matrix.browser}} BVER=${{matrix.bver}} DISPLAY=:99.0 node_modules/.bin/jest --retries=3 test/interop/
+    - name: Kill tshark capture
+      run: sudo killall tshark 1> /dev/null 2> /dev/null
+      continue-on-error: true
+    - name: Filter DTLS handshake in pcap 
+      run: sudo tshark -r ./captures/full-capture-${{matrix.browser}}-${{steps.browser.outputs.version}}.pcap -Y "dtls.handshake" -w ./captures/capture-${{matrix.browser}}-${{steps.browser.outputs.version}}.pcap
+    - name: Archive pcap
+      uses: actions/upload-artifact@v4
+      with: 
+        name: fingerprint-pcap-${{matrix.browser}}-${{steps.browser.outputs.version}}
+        path: ./captures/capture-${{matrix.browser}}-${{steps.browser.outputs.version}}.pcap
