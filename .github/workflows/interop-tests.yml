@@ -53,13 +53,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+      - run: mkdir -p ./fingerprints 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with: 
-          path: fingerprint-pcap
+          path: ./fingerprints
           pattern: fingerprint-pcap-*
           merge-multiple: true
-      - run: ls -R fingerprint-pcap
+      - run: ls -R fingerprints
+      - run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add ./fingerprints
+          git commit -m "Add fresh fingerprints"
+          git push
 
 
     
