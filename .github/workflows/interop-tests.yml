@@ -47,3 +47,19 @@ jobs:
       with: 
         name: fingerprint-pcap-${{matrix.browser}}-${{steps.browser.outputs.version}}
         path: ./captures/capture-${{matrix.browser}}-${{steps.browser.outputs.version}}.pcap
+
+  commit-fingerprints:
+    needs: interop
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with: 
+          path: fingerprint-pcap
+          pattern: fingerprint-pcap-*
+          merge-multiple: true
+      - run: ls -R fingerprint-pcap
+
+
+    
