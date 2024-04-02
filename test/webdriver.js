@@ -21,10 +21,12 @@ if (os.platform() === 'win32') {
 
 function buildDriver(browser = process.env.BROWSER || 'chrome', options = {version: process.env.BVER}) {
   // Chrome options.
+  // options.headless = true;
   const chromeOptions = new chrome.Options()
       .addArguments('allow-insecure-localhost')
       .addArguments('use-fake-device-for-media-stream')
       .addArguments('allow-file-access-from-files');
+  // .addArguments('headless=new');
   if (options.chromeFlags) {
     options.chromeFlags.forEach((flag) => chromeOptions.addArguments(flag));
   }
@@ -74,7 +76,7 @@ function buildDriver(browser = process.env.BROWSER || 'chrome', options = {versi
   if (options.firefoxpath) {
     firefoxPath = options.firefoxpath;
   } else if (os.platform() == 'linux' && options.version) {
-    firefoxPath = 'browsers/bin/firefox-' + options.version;
+    firefoxPath = 'browsers/bin/firefox - ' + options.version;
   }
   if (options.headless) {
     firefoxOptions.addArguments('-headless');
@@ -87,10 +89,12 @@ function buildDriver(browser = process.env.BROWSER || 'chrome', options = {versi
       .setChromeOptions(chromeOptions)
       .setSafariOptions(safariOptions)
       .setFirefoxOptions(firefoxOptions)
-      .forBrowser(browser)
-      .setChromeService(
-          new chrome.ServiceBuilder().addArguments('--disable-build-check')
-      );
+      .forBrowser(browser);
+  /*
+    .setChromeService(
+      new chrome.ServiceBuilder().addArguments('--disable-build-check')
+    );
+  */
 
   if (browser === 'firefox') {
     driver.getCapabilities().set('marionette', true);

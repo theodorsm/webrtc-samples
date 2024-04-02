@@ -19,10 +19,11 @@
     "url": "https://github.com/webrtc/samples.git"
   },
   "scripts": {
-    "start": "http-server . -c-1",
+    "start": "http-server ./src/content/datachannel/datatransfer/ -c-1",
     "test": "npm run eslint && npm run stylelint",
     "eslint": "eslint 'test/**.js' 'src/content/**/*.js'",
-    "jest": "jest --testTimeout 5000 --maxWorkers=1 'src/content/**/test.js'",
+    "format": "eslint 'test/**.js' 'src/content/**/*.js' --fix",
+    "jest": "jest --testTimeout 10000 --maxWorkers=1 './test/interop/connection.test.js'",
     "stylelint": "stylelint 'src/**/*.css'"
   },
   "eslintIgnore": [
